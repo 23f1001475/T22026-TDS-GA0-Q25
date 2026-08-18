@@ -31,7 +31,7 @@ jobs:
       - name: Run tests
         run: cd TDS-G5 && npm test
       
-      - name: TDS identity
+      - name: TDS identity: 23f1001475@ds.study.iitm.ac.in
         run: echo "23f1001475@ds.study.iitm.ac.in"
       
       - name: Start service
@@ -84,4 +84,3 @@ jobs:
                 "criticalVulnerabilities": 0, "digestPinned": true
               }
             }' | grep -q '"decision":"block"' && echo "Invalid deployment blocked"
-
