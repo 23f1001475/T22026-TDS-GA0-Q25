@@ -1,0 +1,16 @@
+{
+  "name": "release-gate",
+  "version": "1.0.0",
+  "description": "CI/CD Container Release Gate Policy Endpoint",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test.js"
+  },
+  "keywords": ["ci-cd", "release", "policy", "container"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

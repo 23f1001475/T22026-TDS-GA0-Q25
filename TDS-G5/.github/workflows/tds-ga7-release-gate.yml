@@ -1,0 +1,86 @@
+name: TDS GA7 Release Gate
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  release-gate-tests:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: none
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Run tests
+        run: npm test
+      
+      - name: TDS identity
+        run: echo "23f1001475@ds.study.iitm.ac.in"
+      
+      - name: Start service
+        run: npm start &
+        env:
+          PORT: 3000
+      
+      - name: Wait for service
+        run: sleep 2
+      
+      - name: Health check
+        run: curl http://localhost:3000/health
+      
+      - name: Test valid preview deployment
+        run: |
+          curl -X POST http://localhost:3000/release-gate \
+            -H "Content-Type: application/json" \
+            -d '{
+              "target": "preview",
+              "event": "pull_request",
+              "ref": "refs/heads/feature",
+              "workflow": {
+                "trigger": "pull_request",
+                "permissions": {"contents":"read", "packages":"write", "id-token":"none"},
+                "testsPassed": true, "matrixComplete": true, "failFast": false,
+                "actions": [{"owner":"actions", "name":"checkout", "ref":"v4"}]
+              },
+              "image": {
+                "multiStage": true, "runsAsRoot": false, "secretMode": "none",
+                "criticalVulnerabilities": 0, "digestPinned": true
+              }
+            }' | grep -q '"decision":"promote"' && echo "Valid deployment accepted"
+      
+      - name: Test blocked deployment
+        run: |
+          curl -X POST http://localhost:3000/release-gate \
+            -H "Content-Type: application/json" \
+            -d '{
+              "target": "preview",
+              "event": "pull_request",
+              "ref": "refs/heads/feature",
+              "workflow": {
+                "trigger": "pull_request_target",
+                "permissions": {"contents":"read", "packages":"write", "id-token":"none"},
+                "testsPassed": true, "matrixComplete": true, "failFast": false,
+                "actions": [{"owner":"actions", "name":"checkout", "ref":"v4"}]
+              },
+              "image": {
+                "multiStage": true, "runsAsRoot": false, "secretMode": "none",
+                "criticalVulnerabilities": 0, "digestPinned": true
+              }
+            }' | grep -q '"decision":"block"' && echo "Invalid deployment blocked"
